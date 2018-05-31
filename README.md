@@ -33,10 +33,10 @@ board_string = '''
 ```
 
 Edit this string so that it looks like your current board configuration, 
-making sure that everything lines up straight. This will create a Board
+making sure that everything lines up straight. This will create a ```Board```
 class with this as its config. Below this, you will find an instance of 
-a Solver class. Feed this your current letters, for example 'djfpeys',
-by editing the ```python 'my_letters' ``` variable and run the print_solutions method. 
+a ```Solver``` class. Feed this your current letters, for example 'djfpeys',
+by editing the ```my_letters``` variable and run the ```print_solutions``` method. 
 This will output all possible plays in order of highest score. 
 
 Currently there is no functionailty for blank tiles but hopefully I will
