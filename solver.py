@@ -188,6 +188,7 @@ class Board:
 class Solver:
 
     def __init__(self, Board, rack):
+        '''Simple init. Add variables'''
         self.rack = rack
         self.Board = Board
 
@@ -203,7 +204,9 @@ class Solver:
             adjacent1 = [''] * 11
         if adjacent2 == None:
             adjacent2 = [''] * 11
+
         non_starters = []
+
         occupied = [index for index in range(len(row)) if row[index] != '']
         for index, item in enumerate(row):
             if index == 0:
@@ -226,11 +229,37 @@ class Solver:
 
         return starters, non_starters, occupied
 
-    def find_valid_placements(self, row, adjacent1, adjacent2):
+    def find_valid_placements(self, index, rtype='row'):
         '''
         Find the set of sets of indices where letters can possibly
         be placed
         '''
+        board = self.Board.letters
+
+        if rtype == 'col':
+            row = list(board[index, :][::-1])
+            if index == 0:
+                adjacent1 = None
+                adjacent2 = list(board[index + 1, :][::-1])
+            elif index == 10:
+                adjacent1 = list(board[index - 1, :][::-1])
+                adjacent2 = None
+            else:
+                adjacent1 = list(board[index - 1, :][::-1])
+                adjacent2 = list(board[index + 1, :][::-1])
+
+        elif rtype == 'row':
+            row = list(board[:, index])
+            if index == 0:
+                adjacent1 = None
+                adjacent2 = list(board[:, index + 1])
+            elif index == 10:
+                adjacent1 = list(board[:, index - 1])
+                adjacent2 = None
+            else:
+                adjacent1 = list(board[:, index - 1])
+                adjacent2 = list(board[:, index + 1])
+
         starters, non_starters, occupied = self.identify_starters(row,  adjacent1, adjacent2)
         master_poss = []
         for starter in starters:
@@ -280,9 +309,17 @@ class Solver:
         row = [' ' if letter == '' else letter for letter in row]
         return [word for word in ''.join(row).split(' ') if len(word) > 1]
 
-    def find_words(self, row, adjacent1, adjacent2):
+    def find_words(self, index, rtype='row'):
 
-        valid_placements = self.find_valid_placements(row, adjacent1, adjacent2)
+        board = self.Board.letters
+
+        if rtype == 'col':
+            row = list(board[index, :][::-1])
+
+        elif rtype == 'row':
+            row = list(board[:, index])
+
+        valid_placements = self.find_valid_placements(index, rtype=rtype)
         if valid_placements == {}:
             return []
         big = min([len(self.rack), max(valid_placements.keys())])
@@ -310,12 +347,12 @@ class Solver:
                         new_rows.append(new_row)
         return new_rows
 
-    def validate(self, number, new_row, rtype='row'):
+    def validate(self, index, new_row, rtype='row'):
 
         test_board = self.Board.letters.copy()
 
         if rtype == 'row':
-            test_board[:, number] = new_row
+            test_board[:, index] = new_row
             for col_num in range(11):
                 test_col = list(test_board[col_num, :][::-1])
                 words = self.extract_words(test_col)
@@ -325,7 +362,7 @@ class Solver:
             return True, test_board
 
         elif rtype == 'col':
-            test_board[number, :] = list(reversed(new_row))
+            test_board[index, :] = list(reversed(new_row))
             for row_num in range(11):
                 test_row = list(test_board[:, row_num])
                 words = self.extract_words(test_row)
@@ -442,34 +479,14 @@ class Solver:
         counter = 0
         poss = []
         for col_num in range(11):
-            col = list(board[col_num, :][::-1])
-            if col_num == 0:
-                adjacent1 = None
-                adjacent2 = list(board[col_num + 1, :][::-1])
-            elif col_num == 10:
-                adjacent1 = list(board[col_num - 1, :][::-1])
-                adjacent2 = None
-            else:
-                adjacent1 = list(board[col_num - 1, :][::-1])
-                adjacent2 = list(board[col_num + 1, :][::-1])
-            rows = self.find_words(col, adjacent1, adjacent2)
+            rows = self.find_words(col_num, rtype='col')
             for row in rows:
                 valid, new_board = self.validate(col_num, row, rtype='col')
                 if valid:
                     poss.append(('col', row, col_num, self.score(board, new_board)))
 
         for row_num in range(11):
-            row = list(board[:, row_num])
-            if row_num == 0:
-                adjacent1 = None
-                adjacent2 = list(board[:, row_num + 1])
-            elif row_num == 10:
-                adjacent1 = list(board[:, row_num - 1])
-                adjacent2 = None
-            else:
-                adjacent1 = list(board[:, row_num - 1])
-                adjacent2 = list(board[:, row_num + 1])
-            rows = self.find_words(row, adjacent1, adjacent2)
+            rows = self.find_words(row_num, rtype='row')
             for row in rows:
                 valid, new_board = self.validate(row_num, row, rtype='row')
                 if valid:
@@ -535,11 +552,12 @@ board_string = '''
  --------------------------------------------
 '''
 
+my_letters = 'djfpeys'
 
 MyBoard = Board()
 MyBoard.ingest(board_string)
 MyBoard.print_board(board_type='letters')
 MyBoard.print_board(board_type='powers')
 
-solver = Solver(MyBoard, 'aaspr')
+solver = Solver(MyBoard, my_letters)
 solver.print_solutions()

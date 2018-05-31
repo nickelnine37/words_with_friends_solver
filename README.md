@@ -5,7 +5,7 @@ a string that looks something like:
 
 ```python
 board_string = '''
- A   B   C   D   E   F   G   H   I   J   K 
+  A   B   C   D   E   F   G   H   I   J   K 
  --------------------------------------------
 |   |   |   |   |   |   |   |   |   |   |   | 1 
  --------------------------------------------
@@ -36,7 +36,10 @@ Edit this string so that it looks like your current board configuration,
 making sure that everything lines up straight. This will create a Board
 class with this as its config. Below this, you will find an instance of 
 a Solver class. Feed this your current letters, for example 'djfpeys',
-and run the print_solutions method. This will output all possible plays
-in order of highest score. 
+by editing the ```python 'my_letters' ``` variable and run the print_solutions method. 
+This will output all possible plays in order of highest score. 
+
+Currently there is no functionailty for blank tiles but hopefully I will
+be able to add this soon. Pull requests welcome!
 
 Enjoy and use responsibly! ;)
