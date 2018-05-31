@@ -1,11 +1,58 @@
-from itertools import permutations, combinations, chain, product, groupby
-from operator import itemgetter
+from itertools import permutations, combinations
 import numpy as np
-from pprint import pprint
-
 
 with open('dictionary.txt', 'r') as f:
     dictionary = f.read().splitlines()
+
+
+def sort_dict():
+    sorted_dict = {}
+    alphabet = 'abcdefghijklmnopqrstuvwxyz '
+    for letter1 in alphabet:
+        for letter2 in alphabet:
+            for letter3 in alphabet:
+                sorted_dict[letter1 + letter2 + letter3] = []
+    for word in dictionary:
+        letters = word[:3]
+        l = len(letters)
+        if l == 3:
+            sorted_dict[letters].append(word)
+        elif l == 2:
+            sorted_dict[letters + ' '].append(word)
+        elif l == 1:
+            sorted_dict[letters + '  '].append(word)
+
+    return sorted_dict
+
+
+sorted_dict = sort_dict()
+
+
+def exists(word):
+    letters = word[:3]
+    l = len(letters)
+    if l == 3:
+        return word in sorted_dict[letters]
+    elif l == 2:
+        return word in sorted_dict[letters + ' ']
+    elif l == 1:
+        return word in sorted_dict[letters + '  ']
+
+
+def find_words_simple(letters):
+    all_combs = []
+    all_perms = []
+    for n in range(1, 8):
+        all_combs += [''.join(p) for p in combinations(letters, n)]
+    for comb in all_combs:
+        all_perms += [''.join(p) for p in permutations(comb)]
+    all_perms = set(all_perms)
+    all_words = []
+    for perm in all_perms:
+        if exists(perm):
+            all_words.append(perm)
+    return all_words
+
 
 dls = [(2, 4), (2, 6), (4, 2), (4, 8),
        (6, 2), (6, 8), (8, 4), (8, 6)]
@@ -77,139 +124,71 @@ tiles = {'a': 5,
          ' ': 2, }
 
 
-def sort_dict():
-    sorted_dict = {}
-    alphabet = 'abcdefghijklmnopqrstuvwxyz '
-    for letter1 in alphabet:
-        for letter2 in alphabet:
-            for letter3 in alphabet:
-                sorted_dict[letter1 + letter2 + letter3] = []
-    for word in dictionary:
-        letters = word[:3]
-        l = len(letters)
-        if l == 3:
-            sorted_dict[letters].append(word)
-        elif l == 2:
-            sorted_dict[letters + ' '].append(word)
-        elif l == 1:
-            sorted_dict[letters + '  '].append(word)
-
-    return sorted_dict
-
-
-sorted_dict = sort_dict()
-
-
-def exists(word):
-    letters = word[:3]
-    l = len(letters)
-    if l == 3:
-        return word in sorted_dict[letters]
-    elif l == 2:
-        return word in sorted_dict[letters + ' ']
-    elif l == 1:
-        return word in sorted_dict[letters + '  ']
-
-
-def find_words_simple(letters):
-    all_combs = []
-    all_perms = []
-    for n in range(1, 8):
-        all_combs += [''.join(p) for p in combinations(letters, n)]
-    for comb in all_combs:
-        all_perms += [''.join(p) for p in permutations(comb)]
-    all_perms = set(all_perms)
-    all_words = []
-    for perm in all_perms:
-        if exists(perm):
-            all_words.append(perm)
-    return all_words
-
-
 class Board:
 
     def __init__(self, letters=None):
+
         self.letters = np.chararray((11, 11), itemsize=1, unicode=True)
         self.powers = np.chararray((11, 11), itemsize=3, unicode=True)
-        if type(letters) != type(None):
-            self.letters = letters
+
         for x in range(11):
             for y in range(11):
-                square = (x, y)
-                power = ''
-                letter = ''
-                if square in dls:
+
+                if (x, y) in dls:
                     power = 'dlr'
-                if square in tls:
+                elif (x, y) in tls:
                     power = 'tlr'
-                if square in dws:
+                elif (x, y) in dws:
                     power = 'dwr'
-                if square in tws:
+                elif (x, y) in tws:
                     power = 'twr'
-                if type(letters) == type(None):
-                    self.letters[x, y] = letter
+                else:
+                    power = ''
+
+                self.letters[x, y] = ''
                 self.powers[x, y] = power
 
-    def print_powers(self):
+    def print_board(self, board_type='letters'):
+
         print("  A   B   C   D   E   F   G   H   I   J   K  ")
         print(" " + '-' * 11 * 4)
-        for y in reversed(range(11)):
-            for x in range(11):
-                power = self.powers[x, y]
-                if power == '':
-                    power = '   '
-                print("|" + power, end="", flush=True)
-            print('| {}'.format(11 - y), '\n', '-' * 11 * 4)
 
-    def print_letters(self):
-        print("  A   B   C   D   E   F   G   H   I   J   K  ")
-        print(" " + '-' * 11 * 4)
-        for y in reversed(range(11)):
-            for x in range(11):
-                letter = str(self.letters[x, y])
-                if letter == '':
-                    letter = ' '
-                print('| ' + letter, end=" ", flush=True)
-            print('| {}'.format(11 - y), '\n', '-' * 11 * 4)
+        if board_type == 'letters':
+            for y in reversed(range(11)):
+                for x in range(11):
+                    item = str(self.letters[x, y])
+                    if item == '':
+                        item = ' '
+                    print('| ' + item, end=" ", flush=True)
+                print('| {}'.format(11 - y), '\n', '-' * 11 * 4)
 
-    def change_row(self, index, new_row, rtype='row'):
-        if rtype == 'row':
-            self.letters[:, index] = new_row
-            for i in range(11):
-                if self.letters[i, index] != '':
-                    self.powers[i, index] = ''
-        elif rtype == 'col':
-            self.letters[index, :] = list(reversed(new_row))
-            for i in range(11):
-                if self.letters[index, i] != '':
-                    self.powers[index, i] = ''
+        elif board_type == 'powers':
+            for y in reversed(range(11)):
+                for x in range(11):
+                    item = str(self.powers[x, y])
+                    if item == '':
+                        item = '   '
+                    print('|' + item, end="", flush=True)
+                print('| {}'.format(11 - y), '\n', '-' * 11 * 4)
+
         else:
-            print('rtype must be row or col')
-        # self.print_letters()
+            print('board type must be letters or powers')
 
-    def add_letter(self, letter, coords='A5'):
-        cols = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K']
-        col = cols.index(coords[0])
-        row = int(coords[1]) - 1
-        self.letters[col, 10 - row] = letter
-        self.powers[col, 10 - row] = ''
-
-
-MyBoard = Board()
-MyBoard.add_letter('f', 'J9')
-# MyBoard.change_row(1, ['', '', '', '', '', 'b', 'e', '', '', '', ''], rtype='row')
-# MyBoard.change_row(5, ['', '', '', '', '', '', 'd', 'r', 'a', 'b', ''], rtype='col')
-# MyBoard.change_row(4, ['', '', '', '', '', 'd', 'a', 'm', 'n', '', ''], rtype='row')
-# MyBoard.change_row(3, ['', '', '', '', '', 'r', 'e', '', '', '', ''], rtype='row')
-# MyBoard.change_row(6, ['', '', '', '', '', '', 'a', 'e', '', 'e', 'r'], rtype='col')
-MyBoard.print_letters()
-MyBoard.print_powers()
+    def ingest(self, board_string):
+        rows = [row for i, row in enumerate(board_string.split('\n')) if i % 2 and i != 1][:-1]
+        for index, row in enumerate(rows):
+            new_row = [letter for i, letter in enumerate(row) if i % 4 == 2][:-1]
+            new_row = ['' if letter == ' ' else letter for letter in new_row]
+            self.letters[:, 10 - index] = new_row
+            for i in range(11):
+                if new_row[i] != '':
+                    self.powers[i, 10 - index] = ''
 
 
 class Solver:
 
-    def __init__(self, Board, letters):
-        self.letters = letters
+    def __init__(self, Board, rack):
+        self.rack = rack
         self.Board = Board
 
     def identify_starters(self, row, adjacent1, adjacent2):
@@ -306,24 +285,24 @@ class Solver:
         valid_placements = self.find_valid_placements(row, adjacent1, adjacent2)
         if valid_placements == {}:
             return []
-        big = min([len(self.letters), max(valid_placements.keys())])
+        big = min([len(self.rack), max(valid_placements.keys())])
         small = min(valid_placements.keys())
         valid_placements = {key: item for key, item in valid_placements.items() if key <= big}
         all_combs = {}
         all_perms = {}
         new_rows = []
         for n in range(small, big + 1):
-            all_combs[n] = [''.join(p) for p in combinations(self.letters, n)]
+            all_combs[n] = [''.join(p) for p in combinations(self.rack, n)]
         for key, item in all_combs.items():
             all_perms[key] = list(set([''.join(p) for comb in item for p in permutations(comb)]))
         for n in range(small, big + 1):
             placements = valid_placements[n]
-            letterss = all_perms[n]
+            perms = all_perms[n]
             for placement in placements:
-                for letters in letterss:
+                for perm in perms:
                     new_row = row[:]
                     for i, index in enumerate(placement):
-                        new_row[index] = letters[i]
+                        new_row[index] = perm[i]
                     words = self.extract_words(new_row)
                     for word in words:
                         if not exists(word):
@@ -456,7 +435,7 @@ class Solver:
 
         return total_score
 
-    def solve(self):
+    def solve(self, n_solutions=10):
 
         board = self.Board.letters
         options = []
@@ -498,32 +477,69 @@ class Solver:
 
         poss = sorted(poss, key=lambda x: -x[3])
 
-        return poss[:10]
+        return poss[:n_solutions]
 
-    def present_solution(self):
+    def print_solutions(self, n_solutions=10):
 
-        solutions = self.solve()
+        solutions = self.solve(n_solutions=n_solutions)
 
         for i, solution in enumerate(reversed(solutions)):
 
             new_board = self.Board.letters.copy()
             rtype, new_row, index, score = solution
             if rtype == 'row':
+                key_word = 'across'
                 old_row = list(new_board[:, index])
                 old_words = self.extract_words(old_row)
                 new_words = self.extract_words(new_row)
                 new_word = [word for word in new_words if word not in old_words][0]
                 new_board[:, index] = new_row
             elif rtype == 'col':
+                key_word = 'down'
                 old_col = list(new_board[index, :][::-1])
                 old_words = self.extract_words(old_col)
                 new_words = self.extract_words(new_row)
                 new_word = [word for word in new_words if word not in old_words][0]
                 new_board[index, :] = list(reversed(new_row))
-            print('solution {0}: play {1} for {2} points'.format(10 - i, new_word, score))
-            Board(letters=new_board).print_letters()
+            print('Solution {0}: play "{1}" {2} for {3} points'.format(
+                10 - i, new_word, key_word, score))
+            to_print = Board()
+            to_print.letters = new_board
+            to_print.print_board()
 
 
-# solver = Solver(MyBoard, 'aaspr')
-#
-# solver.present_solution()
+board_string = '''
+  A   B   C   D   E   F   G   H   I   J   K
+ --------------------------------------------
+|   |   |   |   |   |   |   |   |   |   |   | 1
+ --------------------------------------------
+|   |   |   |   |   |   |   |   |   |   |   | 2
+ --------------------------------------------
+|   |   |   |   |   |   |   |   |   |   |   | 3
+ --------------------------------------------
+|   |   |   |   |   |   |   |   |   |   |   | 4
+ --------------------------------------------
+|   |   |   |   |   |   |   |   |   |   |   | 5
+ --------------------------------------------
+|   |   |   |   |   | w | o | r | d | s |   | 6
+ --------------------------------------------
+|   |   |   |   |   |   |   |   |   |   |   | 7
+ --------------------------------------------
+|   |   |   |   |   |   |   |   |   |   |   | 8
+ --------------------------------------------
+|   |   |   |   |   |   |   |   |   |   |   | 9
+ --------------------------------------------
+|   |   |   |   |   |   |   |   |   |   |   | 10
+ --------------------------------------------
+|   |   |   |   |   |   |   |   |   |   |   | 11
+ --------------------------------------------
+'''
+
+
+MyBoard = Board()
+MyBoard.ingest(board_string)
+MyBoard.print_board(board_type='letters')
+MyBoard.print_board(board_type='powers')
+
+solver = Solver(MyBoard, 'aaspr')
+solver.print_solutions()
