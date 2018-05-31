@@ -66,7 +66,6 @@ dws = [(1, 1), (9, 9), (1, 5), (1, 9),
 tws = [(0, 2), (0, 8), (2, 10), (8, 10),
        (2, 0), (8, 0), (10, 2), (10, 8)]
 
-
 points = {'a': 1,
           'b': 4,
           'c': 4,
@@ -95,38 +94,10 @@ points = {'a': 1,
           'z': 10,
           ' ': 0}
 
-tiles = {'a': 5,
-         'b': 1,
-         'c': 1,
-         'd': 2,
-         'e': 7,
-         'f': 1,
-         'g': 1,
-         'h': 1,
-         'i': 4,
-         'j': 1,
-         'k': 1,
-         'l': 2,
-         'm': 1,
-         'n': 2,
-         'o': 4,
-         'p': 1,
-         'q': 1,
-         'r': 2,
-         's': 4,
-         't': 2,
-         'u': 1,
-         'v': 1,
-         'w': 1,
-         'x': 1,
-         'y': 1,
-         'z': 1,
-         ' ': 2, }
-
 
 class Board:
 
-    def __init__(self, letters=None):
+    def __init__(self):
 
         self.letters = np.chararray((11, 11), itemsize=1, unicode=True)
         self.powers = np.chararray((11, 11), itemsize=3, unicode=True)
@@ -147,6 +118,16 @@ class Board:
 
                 self.letters[x, y] = ''
                 self.powers[x, y] = power
+
+    def ingest(self, board_string):
+        rows = [row for i, row in enumerate(board_string.split('\n')) if i % 2 and i != 1][:-1]
+        for index, row in enumerate(rows):
+            new_row = [letter for i, letter in enumerate(row) if i % 4 == 2][:-1]
+            new_row = ['' if letter == ' ' else letter for letter in new_row]
+            self.letters[:, 10 - index] = new_row
+            for i in range(11):
+                if new_row[i] != '':
+                    self.powers[i, 10 - index] = ''
 
     def print_board(self, board_type='letters'):
 
@@ -170,19 +151,6 @@ class Board:
                         item = '   '
                     print('|' + item, end="", flush=True)
                 print('| {}'.format(11 - y), '\n', '-' * 11 * 4)
-
-        else:
-            print('board type must be letters or powers')
-
-    def ingest(self, board_string):
-        rows = [row for i, row in enumerate(board_string.split('\n')) if i % 2 and i != 1][:-1]
-        for index, row in enumerate(rows):
-            new_row = [letter for i, letter in enumerate(row) if i % 4 == 2][:-1]
-            new_row = ['' if letter == ' ' else letter for letter in new_row]
-            self.letters[:, 10 - index] = new_row
-            for i in range(11):
-                if new_row[i] != '':
-                    self.powers[i, 10 - index] = ''
 
 
 class Solver:
@@ -320,18 +288,23 @@ class Solver:
             row = list(board[:, index])
 
         valid_placements = self.find_valid_placements(index, rtype=rtype)
+
         if valid_placements == {}:
             return []
+
         big = min([len(self.rack), max(valid_placements.keys())])
         small = min(valid_placements.keys())
         valid_placements = {key: item for key, item in valid_placements.items() if key <= big}
+
         all_combs = {}
         all_perms = {}
         new_rows = []
         for n in range(small, big + 1):
             all_combs[n] = [''.join(p) for p in combinations(self.rack, n)]
+
         for key, item in all_combs.items():
             all_perms[key] = list(set([''.join(p) for comb in item for p in permutations(comb)]))
+
         for n in range(small, big + 1):
             placements = valid_placements[n]
             perms = all_perms[n]
@@ -345,6 +318,7 @@ class Solver:
                         if not exists(word):
                             break
                         new_rows.append(new_row)
+
         return new_rows
 
     def validate(self, index, new_row, rtype='row'):
@@ -370,8 +344,6 @@ class Solver:
                     if not exists(word):
                         return False, None
             return True, test_board
-        else:
-            print('rtype must be row or col')
 
     def extract_word_positions(self, board):
 
@@ -466,6 +438,7 @@ class Solver:
                             multiplier *= 3
                         if p[0] == 'd':
                             multiplier *= 2
+
                 word_score += s
             word_score *= multiplier
             total_score += word_score
@@ -511,6 +484,7 @@ class Solver:
                 new_words = self.extract_words(new_row)
                 new_word = [word for word in new_words if word not in old_words][0]
                 new_board[:, index] = new_row
+
             elif rtype == 'col':
                 key_word = 'down'
                 old_col = list(new_board[index, :][::-1])
@@ -518,8 +492,10 @@ class Solver:
                 new_words = self.extract_words(new_row)
                 new_word = [word for word in new_words if word not in old_words][0]
                 new_board[index, :] = list(reversed(new_row))
+
             print('Solution {0}: play "{1}" {2} for {3} points'.format(
-                10 - i, new_word, key_word, score))
+                n_solutions - i, new_word, key_word, score))
+
             to_print = Board()
             to_print.letters = new_board
             to_print.print_board()
@@ -552,7 +528,7 @@ board_string = '''
  --------------------------------------------
 '''
 
-my_letters = 'djfpeys'
+my_letters = 'ajfpeys'
 
 MyBoard = Board()
 MyBoard.ingest(board_string)
@@ -561,3 +537,32 @@ MyBoard.print_board(board_type='powers')
 
 solver = Solver(MyBoard, my_letters)
 solver.print_solutions()
+
+
+tiles = {'a': 5,
+         'b': 1,
+         'c': 1,
+         'd': 2,
+         'e': 7,
+         'f': 1,
+         'g': 1,
+         'h': 1,
+         'i': 4,
+         'j': 1,
+         'k': 1,
+         'l': 2,
+         'm': 1,
+         'n': 2,
+         'o': 4,
+         'p': 1,
+         'q': 1,
+         'r': 2,
+         's': 4,
+         't': 2,
+         'u': 1,
+         'v': 1,
+         'w': 1,
+         'x': 1,
+         'y': 1,
+         'z': 1,
+         ' ': 2, }
