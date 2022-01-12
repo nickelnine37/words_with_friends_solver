@@ -1,5 +1,8 @@
 # Words With Friends Solver
 
+Accompanying blog posts!: [Part 1](https://nickelnine37.github.io/wwf-solver-pt1.html), [Part 2](https://nickelnine37.github.io/wwf-solver-pt2.html)
+
+
 To run this solver, you must edit the solver.py file. In it, you will find 
 a string that looks something like:
 
